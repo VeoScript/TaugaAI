@@ -1,36 +1,69 @@
 import tw from "twrnc";
 
-import { FlatList, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useEffect } from "react";
+import {
+  View,
+  FlatList,
+  ActivityIndicator,
+  Text,
+  TouchableOpacity,
+} from "react-native";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../lib/navigation";
 
-export default function PeopleScreen() {
+import { usePeopleStore } from "../lib/stores/usePeopleStore";
+
+type Props = NativeStackScreenProps<RootStackParamList, "People">;
+
+export default function PeopleScreen({ navigation }: Props) {
+  const { people, loading, error, getPeople } = usePeopleStore();
+
+  useEffect(() => {
+    getPeople();
+  }, []);
+
+  if (loading) {
+    return <ActivityIndicator size="large" style={tw`mt-5`} />;
+  }
+
+  if (error) {
+    return <Text style={tw`text-sm text-red-500`}>{error}</Text>;
+  }
+
   const listHeaderComponent = () => (
-    <View>
-      <Text>Tauga AI - Mobile Developer Entrance Task</Text>
-    </View>
+    <Text style={tw`font-bold px-3 py-5`}>Star Wars Characters</Text>
   );
 
-  const renderItemComponent = () => (
-    <View>
-      <Text>Tauga AI - Mobile Developer Entrance Task</Text>
-    </View>
+  const renderItemComponent = ({ item }: { item: any }) => (
+    <TouchableOpacity
+      onPress={() =>
+        navigation.navigate("Detail", {
+          person: item,
+        })
+      }
+    >
+      <View style={tw`p-5 border-b-[0.5px] border-neutral-300`}>
+        <Text>{item.name}</Text>
+      </View>
+    </TouchableOpacity>
   );
 
-  const listFooterComponent = () => (
-    <View>
-      <Text>Created by: Jerome Villaruel</Text>
+  const renderFooterComponent = () => (
+    <View style={tw`flex-col items-center w-full p-5 gap-y-3`}>
+      <Text style={tw`text-center`}>End of List</Text>
+      <Text style={tw`text-center text-sm`}>Created by: Jerome Villaruel</Text>
     </View>
   );
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-white px-5`}>
-      <FlatList
-        style={{ flex: 1 }}
-        data={[]}
-        ListHeaderComponent={listHeaderComponent}
-        renderItem={renderItemComponent}
-        ListFooterComponent={listFooterComponent}
-      />
-    </SafeAreaView>
+    <FlatList
+      data={people}
+      keyExtractor={(item) => item.url}
+      ListHeaderComponent={listHeaderComponent}
+      renderItem={renderItemComponent}
+      ListFooterComponent={renderFooterComponent}
+      refreshing={loading}
+      onRefresh={getPeople}
+    />
   );
 }
